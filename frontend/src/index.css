@@ -1,0 +1,23 @@
+.register-login-forms{
+    display:flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+}
+
+.item-list{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.item-container{
+    
+    width: calc(50% - 20px);
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 5px;
+    background-color: #f0f0f0;
+}
