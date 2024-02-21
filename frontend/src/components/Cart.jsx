@@ -1,40 +1,21 @@
+{/* eslint-disable */}
 import React, { useState, useEffect } from 'react';
 import itemService from '../services/items';
 
-const Cart = ({ accessToken, userId }) => {
-  const [cartItems, setCartItems] = useState([]);
+const Cart = ({cartItems, handleDeleteFromCart }) => {
 
-  useEffect(() => {
-    const fetchCartItems = async () => {
-      try {
-        itemService.setToken(accessToken);
-        const cartData = await itemService.getUserCart(userId);
-        setCartItems(cartData.items);
-      } catch (error) {
-        console.log("Error fetching cart items:", error);
-      }
-    };
 
-    fetchCartItems();
-  }, [accessToken, userId]);
-
-  const handleDeleteFromCart = async (itemId) => {
-    try {
-      itemService.setToken(accessToken);
-      await itemService.deleteUserCartItem(itemId);
-      // After deletion, fetch the updated cart items
-      const updatedCartData = await itemService.getUserCart();
-      setCartItems(updatedCartData.items);
-    } catch (error) {
-      console.log("Error deleting item from cart:", error);
-    }
-  };
 
   return (
     <div>
       <h2>Your Cart:</h2>
       <ul>
-        {cartItems.map((item) => (
+        {cartItems === undefined || cartItems.length == 0
+        ? 
+        <h3>No items in Cart</h3>
+        :
+        
+        cartItems.map((item) => (
           <div className='item-container' key={item.id}>
             <h2>{item.title}</h2>
             <h4>{item.description}</h4>
@@ -45,6 +26,12 @@ const Cart = ({ accessToken, userId }) => {
           </div>
         ))}
       </ul>
+      <div>
+      {!(!cartItems|| !cartItems.length) &&
+      <button className='pay-button'>Pay</button>
+      }
+      </div>
+      
     </div>
   );
 };

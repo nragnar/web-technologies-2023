@@ -1,20 +1,67 @@
 /* eslint-disable*/
 
-import React from 'react'
+import React, { useState } from 'react'
 
-const Item = ({onDelete, onAddToCart, id, title, description, price, date, owner}) => {
+const Item = ({ username, handleEditItem, onDelete, onAddToCart, id, title, description, price, date, owner}) => {
 
-  console.log('id :>> ', id);
+  const [visible, setVisible] = useState(false)
+  const [editTitle, setEditTitle] = useState(title)
+  const [editDescription, setEditDescription] = useState(description)
+  const [editPrice, setEditPrice] = useState(price)
+
+
+const editItem = (e) => {
+    e.preventDefault();
+    
+    handleEditItem(id, {
+      title: editTitle,
+      description: editDescription,
+      price: editPrice,
+    })
+    setVisible(!visible)
+  }
+
+  console.log('new Date("2024-02-19T11:09:15.532976Z").toUTCString() :>> ', new Date("2024-02-19T11:09:15.532976Z").toUTCString());
+
+
   return (
     <div className='item-container'>
       <h2>{title}</h2>
       <h4>{description}</h4>
       <p>price: {price}€</p>
       <p>posted by {owner}</p>
-      <p>date posted: {date}</p>
-      <button onClick={() => onAddToCart(id)}>Add to Cart</button>
-      <button>Edit Post</button>
-      <button  onClick={() => onDelete(id)}>Delete Post</button>
+      <p>date posted: {new Date("2024-02-19T11:09:15.532976Z").toUTCString()}</p>
+
+      {username && <button onClick={() => onAddToCart(id)}>Add to Cart</button>}
+      
+      
+
+      {username === owner && (
+      <div>
+        <button  onClick={() => onDelete(id)}>Delete Post</button>
+        <button onClick={() => setVisible(!visible)}>Edit Post</button>
+        {visible &&
+
+            <form>
+            <div>
+              Title:
+              <input type='text' value={editTitle} onChange={({target}) => setEditTitle(target.value)} />
+            </div>
+            <div>
+              Description:
+              <input type='text' value={editDescription} onChange={({target}) => setEditDescription(target.value)} />
+            </div>
+            <div>
+              Price:
+              <input type='text' value={editPrice} onChange={({target}) => setEditPrice(target.value)} />
+            </div>
+            <button type='submit' onClick={editItem}>Submit</button>
+
+</form>
+
+        }
+      </div>
+    )}
     </div>
   )
 }

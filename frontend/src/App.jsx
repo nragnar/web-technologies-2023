@@ -14,7 +14,36 @@ function App() {
   const [items, setItems] = useState([])
   const [user, setUser] = useState('')
   const [username, setUsername] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState("")
+  const [cartItems, setCartItems] = useState([]);
+
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      try {
+        itemService.setToken(user.access);
+        const cartData = await itemService.getUserCart();
+        setCartItems(cartData.items);
+      } catch (error) {
+        console.log("Error fetching cart items:", error);
+      }
+    };
+    fetchCartItems();
+  }, [user.access]);
+
+
+  const handleDeleteFromCart = async (itemId) => {
+    try {
+      itemService.setToken(user.access);
+      await itemService.deleteUserCartItem(itemId);
+      // After deletion, fetch the updated cart items
+      const updatedCartData = await itemService.getUserCart();
+      setCartItems(updatedCartData.items);
+    } catch (error) {
+      console.log("Error deleting item from cart:", error);
+    }
+  };
+
+
 
   const handleSubmitItem = async (blogObject) => {
     try{
@@ -26,6 +55,37 @@ function App() {
       console.log(exception)
     }
   }
+
+  const handleEditItem = async (id, editObject) => {
+    console.log('editObject in app.jsx :>> ', editObject);
+    try {
+      const editedItem = await itemService.editItem(id, editObject)
+
+      const updatedItems = items.map(item => (item.id == editedItem.id ? editedItem : item))
+      setItems(updatedItems)
+    } catch (exception) {
+      console.log(exception);
+    }
+  }
+
+   // Fetch items based on the search query
+   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        let fetchedItems = [];
+        if (searchQuery.trim() === '') {
+          fetchedItems = await itemService.getAll();
+        } else {
+          fetchedItems = await itemService.searchByTitle(searchQuery);
+        }
+        setItems(fetchedItems);
+      } catch (error) {
+        console.log('Error fetching data', error);
+      }
+    };
+    fetchData();
+  }, [searchQuery])
+
 
     // load local storage
     useEffect(() => {
@@ -58,7 +118,7 @@ function App() {
   const onLogout = () => {
     console.log('handle logout')
     window.localStorage.removeItem('loggedShopUser')
-    setUser(null)
+    setUser('')
     setUsername('')
   }
 
@@ -79,35 +139,31 @@ function App() {
     console.log('handle delete item')
 
     await itemService.deleteItem(id)
-    await itemService.getAll()
+    const updatedItems = await itemService.getAll()
+    setItems(updatedItems)
 
   }
 
   const onAddToCart = async (id) => {
     try {
-      await itemService.addToCart(id)
-      alert('item added')
+      const response = await itemService.addToCart(id)
+      const updatedCartItems = await itemService.getUserCart()
+      setCartItems(updatedCartItems.items)
+      alert(response)
     } catch (error) {
-      alert('error')
+      alert(error.response.data)
+      }
     }
-  }
 
-
-  console.log('username :>> ', username);
+  console.log('items in App.jsx :>> ', items);
   console.log('user :>> ', user);
+  console.log('username :>> ', username);
   
   return (
     <>
 
     <h1>Web Shop - nragnell</h1>
     <div className='register-login-forms'>
-    <input
-      type='text'
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      placeholder='Search by title'
-    />
-
     {
     !user ? (
     <div> 
@@ -120,13 +176,19 @@ function App() {
     <ItemForm handleSubmitItem={handleSubmitItem} />
     <p>Logged in as: {username!=null ? username : " " }</p>
     <button onClick={onLogout}>Log out</button>
+    <Cart cartItems={cartItems} accessToken={user ? user.access : null} handleDeleteFromCart={handleDeleteFromCart}/>
     </div>
     }
 
     <RegisterForm handleRegister={onRegister} />
     </div>
-    <ItemList onDelete={onDelete} onAddToCart={onAddToCart} searchQuery={searchQuery}/>
-    <Cart accessToken={user.access} />
+    <input
+      type='text'
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      placeholder='Search by title'
+    />
+    <ItemList handleEditItem={handleEditItem} username={username} items={items} onDelete={onDelete} onAddToCart={onAddToCart}/>
     </>
   )
 }

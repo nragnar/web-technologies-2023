@@ -113,14 +113,13 @@ class AddToCart(APIView):
         item_id = request.data.get('item_id')
         user = request.user
         if not user.is_authenticated:
-            return Response("User not authenticated", status=status.HTTP_401_UNAUTHORIZED)
+            return Response("You are not logged in", status=status.HTTP_401_UNAUTHORIZED)
         
          # Check if the item belongs to the current user
         item = get_object_or_404(Item, pk=item_id)
         if item.owner == user:
             return Response("Cannot add your own item to the cart", status=status.HTTP_400_BAD_REQUEST)
 
-        item = get_object_or_404(Item, pk=item_id)
         cart, created = Cart.objects.get_or_create(user=user)
         cart.items.add(item)
         cart.save()

@@ -17,6 +17,15 @@ const create = async (newObject, username) => {
   return response.data
 }
 
+const editItem = async (id, editedObject) => {
+  console.log('editedObject :>> ', editedObject);
+  const config = {
+    headers: { Authorization: token }
+  }
+  const response = await axios.put(`${baseUrl}${id}/`, editedObject, config)
+  return response.data
+}
+
 
 const getAll = async () => {
     const response = await axios.get(baseUrl)
@@ -67,4 +76,4 @@ const deleteUserCartItem = async (id) => {
 
 
 
-export default { setToken, getAll, create, deleteItem, searchByTitle, addToCart, getUserCart, deleteUserCartItem }
+export default { setToken, getAll, create, deleteItem, searchByTitle, addToCart, getUserCart, deleteUserCartItem, editItem }

@@ -2,6 +2,7 @@ from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from ..models import Item, Cart
+from django.utils.timezone import timezone
 
 # convert to JSON
 class ItemSerializer(ModelSerializer):
