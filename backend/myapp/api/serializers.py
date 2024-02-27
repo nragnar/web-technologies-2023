@@ -1,7 +1,7 @@
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from ..models import Item, Cart
+from ..models import Item, Cart, PurchasedItem, SoldItem
 from django.utils.timezone import timezone
 
 # convert to JSON
@@ -35,3 +35,19 @@ class UserSerializer(serializers.ModelSerializer):
      class Meta:
           model = User
           fields = ['id', 'username', 'cart']
+
+class PurchasedItemSerializer(serializers.ModelSerializer):
+     title = serializers.ReadOnlyField(source='item.title')
+     description = serializers.ReadOnlyField(source='item.description')
+     price = serializers.ReadOnlyField(source='item.price')
+     date = serializers.ReadOnlyField(source='item.date')
+     
+     class Meta:
+          model = PurchasedItem
+          fields = ['id', 'title', 'date', 'description', 'price']
+
+
+class SoldItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SoldItem
+        fields = '__all__'

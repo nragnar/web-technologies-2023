@@ -74,6 +74,30 @@ const deleteUserCartItem = async (id) => {
   
 }
 
+const handlePayItems = async () => {
+  try{
+    const config = {
+      headers: { Authorization: token }
+    }
+    const response = await axios.post(`http://127.0.0.1:8000/api/pay-items/`, null, config)
+    return response.data
+
+  } catch (error) {
+    console.log('error purchasing items ', error);
+    throw error
+  }
+
+}
+
+const getPurchasedItems = async () => {
+  const config = {
+    headers: { Authorization: token }
+  }
+  const response = await axios.get('http://127.0.0.1:8000/api/purchased-items/', config)
+  console.log('response.data :>> ', response.data);
+  return response.data
+}
 
 
-export default { setToken, getAll, create, deleteItem, searchByTitle, addToCart, getUserCart, deleteUserCartItem, editItem }
+
+export default { setToken, getAll, create, deleteItem, searchByTitle, addToCart, getUserCart, deleteUserCartItem, editItem, handlePayItems, getPurchasedItems }

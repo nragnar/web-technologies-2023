@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import itemService from '../services/items';
 
-const Cart = ({cartItems, handleDeleteFromCart }) => {
+const Cart = ({ handlePay, cartItems, handleDeleteFromCart }) => {
+
+
 
 
 
@@ -28,7 +30,9 @@ const Cart = ({cartItems, handleDeleteFromCart }) => {
       </ul>
       <div>
       {!(!cartItems|| !cartItems.length) &&
-      <button className='pay-button'>Pay</button>
+      <button className='pay-button' onClick={handlePay}>
+        Pay
+      </button>
       }
       </div>
       

@@ -1,11 +1,11 @@
 from rest_framework.viewsets import ModelViewSet
-from ..models import Item, Cart
+from ..models import Item, Cart, PurchasedItem, SoldItem
 from .serializers import ItemSerializer
 from .serializers import UserSerializer
 from .serializers import CartSerializer
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
-from .serializers import LoginSerializer, RegisterSerializer
+from .serializers import LoginSerializer, RegisterSerializer, PurchasedItemSerializer, SoldItemSerializer
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -20,6 +20,9 @@ from rest_framework.response import Response
 from myapp.api.permissions import IsOwnerOrReadOnly
 from rest_framework import generics
 from rest_framework import filters
+from django.db import transaction
+from django.utils import timezone
+from django.db.models import Subquery
 
 class ItemList(generics.ListCreateAPIView):
 
@@ -27,6 +30,11 @@ class ItemList(generics.ListCreateAPIView):
     
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+    def get_queryset(self):
+        # Exclude items that have been purchased
+        purchased_item_ids = PurchasedItem.objects.values('item_id')
+        queryset = Item.objects.exclude(id__in=Subquery(purchased_item_ids))
     
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
@@ -122,8 +130,9 @@ class AddToCart(APIView):
 
         cart, created = Cart.objects.get_or_create(user=user)
         cart.items.add(item)
-        cart.save()
+        cart.save()        
         return Response("Item added to cart", status=status.HTTP_201_CREATED)
+
     
 class RemoveFromCart(APIView):
     permission_classes = [IsAuthenticated]
@@ -136,3 +145,92 @@ class RemoveFromCart(APIView):
         item = get_object_or_404(cart.items, pk=item_id)
         cart.items.remove(item)
         return Response("Item removed from cart", status=status.HTTP_204_NO_CONTENT)
+    
+
+class PayForItems(APIView):
+    
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        try:
+            cart = Cart.objects.get(user=user)
+            items = cart.items.all()
+
+            with transaction.atomic():
+                purchased_items = []
+                for item in items:
+                    # Create a new instance of the Item model for the purchased item
+                    purchased_item = Item.objects.create(
+                        title=item.title,
+                        description=item.description,
+                        price=item.price,
+                        owner=user
+                    )
+
+                    # Create a new PurchasedItem instance for the purchased item
+                    purchased_item_record = PurchasedItem.objects.create(
+                        item=purchased_item,
+                        buyer=user
+                    )
+
+                    # Add the purchased item to the purchased items list
+                    purchased_items.append(purchased_item_record)
+
+                    # Remove the item from the cart
+                    item.delete()
+                    cart.items.remove(item)
+                
+                # Clear the cart
+                cart.items.clear()
+
+            serializer = PurchasedItemSerializer(purchased_items, many=True)
+            return Response(serializer.data)
+
+        except Cart.DoesNotExist:
+            return Response("Cart not found", status=status.HTTP_404_NOT_FOUND)
+        
+class PurchasedItemList(generics.ListAPIView):
+    serializer_class = PurchasedItemSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return PurchasedItem.objects.filter(buyer=user)
+
+class SoldItem(APIView):
+    def post(self, request, item_id):
+        try:
+            # Retrieve the item
+            item = get_object_or_404(Item, pk=item_id)
+
+            # Retrieve the original seller of the item
+            original_seller = item.owner
+
+            # Create a new instance of SoldItem
+            sold_item = SoldItem.objects.create(
+                item=item,
+                seller=original_seller
+            )
+
+            # Optionally, you can remove the item from the list of available items
+            # item.delete()
+
+            # Add the sold item to the original seller's sold items list
+            original_seller.sold_items.add(sold_item)
+
+            # Serialize the sold item
+            serializer = SoldItemSerializer(sold_item)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+        
+class SoldItemList(generics.ListAPIView):
+    serializer_class = SoldItemSerializer
+    permission_classes = [IsAuthenticated]  # Require authentication to access the sold items list
+
+    def get_queryset(self):
+        user = self.request.user
+        return SoldItem.objects.filter(seller=user)

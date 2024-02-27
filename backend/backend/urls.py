@@ -25,17 +25,18 @@ from rest_framework_simplejwt.views import (
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    #path('api/', include('backend.api.urls')),
     path('api/login/', views.LoginUser.as_view()),
     path('api/register/', views.RegisterUser.as_view()),
     path('api/items/', views.ItemList.as_view()),
     path('api/items/<int:pk>/', views.ItemDetail.as_view()),
     path('api/users/', views.UserList.as_view()),
     path('api/users/<int:pk>/', views.UserDetail.as_view()),
-    #path('api/users/cart/', views.CartList.as_view(), name='user-cart-detail'),
     path('api/users/cart/', views.CartDetail.as_view(), name='user-cart-detail'),
     path('api/add-to-cart/', views.AddToCart.as_view(), name='add-to-cart'),
     path('api/remove-from-cart/<int:item_id>/', views.RemoveFromCart.as_view(), name='remove-from-cart'),
+    path('api/purchased-items/', views.PurchasedItemList.as_view(), name='purchased-items'),
+    path('api/pay-items/', views.PayForItems.as_view(), name="pay-items"),
+    path('api/sold-items/<int:item_id>/', views.SoldItem.as_view(), name="sold-items"),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]

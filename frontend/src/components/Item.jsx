@@ -21,8 +21,6 @@ const editItem = (e) => {
     setVisible(!visible)
   }
 
-  console.log('new Date("2024-02-19T11:09:15.532976Z").toUTCString() :>> ', new Date("2024-02-19T11:09:15.532976Z").toUTCString());
-
 
   return (
     <div className='item-container'>
@@ -30,7 +28,7 @@ const editItem = (e) => {
       <h4>{description}</h4>
       <p>price: {price}€</p>
       <p>posted by {owner}</p>
-      <p>date posted: {new Date("2024-02-19T11:09:15.532976Z").toUTCString()}</p>
+      <p>date posted: {new Date(date).toUTCString()}</p>
 
       {username && <button onClick={() => onAddToCart(id)}>Add to Cart</button>}
       

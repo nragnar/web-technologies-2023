@@ -7,6 +7,7 @@ import LoginForm from './components/LoginForm'
 import RegisterForm from './components/RegisterForm'
 import ItemList from './components/ItemList'
 import Cart from './components/Cart'
+import Inventory from './components/Inventory'
 
 
 function App() {
@@ -16,7 +17,9 @@ function App() {
   const [username, setUsername] = useState('')
   const [searchQuery, setSearchQuery] = useState("")
   const [cartItems, setCartItems] = useState([]);
+  const [purchasedItems, setPurchasedItems] = useState([])
 
+  // fetch Cart
   useEffect(() => {
     const fetchCartItems = async () => {
       try {
@@ -29,6 +32,53 @@ function App() {
     };
     fetchCartItems();
   }, [user.access]);
+
+  // fetch purchased Items
+  useEffect(() => {
+    const fetchPurchasedItems = async () => {
+      try {
+        itemService.setToken(user.access);
+        const purchaseData = await itemService.getPurchasedItems()
+        console.log('purchaseData', purchaseData);
+        setPurchasedItems(purchaseData)
+      } catch (error) {
+        console.log('error fetching Purchase Items', error);
+      }
+    }
+    fetchPurchasedItems()
+  }, [user.access])
+
+
+     // Fetch items based on the search query
+     useEffect(() => {
+      const fetchData = async () => {
+        try {
+          let fetchedItems = [];
+          if (searchQuery.trim() === '') {
+            fetchedItems = await itemService.getAll();
+          } else {
+            fetchedItems = await itemService.searchByTitle(searchQuery);
+          }
+          setItems(fetchedItems);
+        } catch (error) {
+          console.log('Error fetching data', error);
+        }
+      };
+      fetchData();
+    }, [searchQuery])
+  
+  
+      // load local storage
+      useEffect(() => {
+        const loggedUserJSON = window.localStorage.getItem('loggedShopUser')
+        if (loggedUserJSON) {
+          const user = JSON.parse(loggedUserJSON)
+          // we need a setUsername but we dont have that automatically without a login, need to fix the user instance to an object
+          // setUsername(username)
+          setUser(user)
+          itemService.setToken(user.access)
+        }
+      }, [])
 
 
   const handleDeleteFromCart = async (itemId) => {
@@ -68,36 +118,7 @@ function App() {
     }
   }
 
-   // Fetch items based on the search query
-   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        let fetchedItems = [];
-        if (searchQuery.trim() === '') {
-          fetchedItems = await itemService.getAll();
-        } else {
-          fetchedItems = await itemService.searchByTitle(searchQuery);
-        }
-        setItems(fetchedItems);
-      } catch (error) {
-        console.log('Error fetching data', error);
-      }
-    };
-    fetchData();
-  }, [searchQuery])
 
-
-    // load local storage
-    useEffect(() => {
-      const loggedUserJSON = window.localStorage.getItem('loggedShopUser')
-      if (loggedUserJSON) {
-        const user = JSON.parse(loggedUserJSON)
-        // we need a setUsername but we dont have that automatically without a login, need to fix the user instance to an object
-        // setUsername(username)
-        setUser(user)
-        itemService.setToken(user.access)
-      }
-    }, [])
 
   const onLogin = async (username, password) => {
     console.log('handle login')
@@ -155,9 +176,19 @@ function App() {
       }
     }
 
-  console.log('items in App.jsx :>> ', items);
-  console.log('user :>> ', user);
-  console.log('username :>> ', username);
+    const handlePay = async () => {
+      try {
+        await itemService.handlePayItems(user.access)
+        const updatedItems = items.filter(item => !cartItems.some(cartItem => cartItem.id === item.id));
+        setItems(updatedItems)
+        setPurchasedItems([...purchasedItems, ...cartItems])
+        console.log("we are in handlePay")
+      } catch (error) {
+        console.log('error from cart while paying items', error)
+      }
+    }
+
+  console.log('purchasedItems :>> ', purchasedItems);
   
   return (
     <>
@@ -176,7 +207,7 @@ function App() {
     <ItemForm handleSubmitItem={handleSubmitItem} />
     <p>Logged in as: {username!=null ? username : " " }</p>
     <button onClick={onLogout}>Log out</button>
-    <Cart cartItems={cartItems} accessToken={user ? user.access : null} handleDeleteFromCart={handleDeleteFromCart}/>
+    <Cart handlePay={handlePay} cartItems={cartItems} handleDeleteFromCart={handleDeleteFromCart}/>
     </div>
     }
 
@@ -189,6 +220,7 @@ function App() {
       placeholder='Search by title'
     />
     <ItemList handleEditItem={handleEditItem} username={username} items={items} onDelete={onDelete} onAddToCart={onAddToCart}/>
+    <Inventory purchasedItems={purchasedItems} />
     </>
   )
 }
