@@ -94,10 +94,17 @@ const getPurchasedItems = async () => {
     headers: { Authorization: token }
   }
   const response = await axios.get('http://127.0.0.1:8000/api/purchased-items/', config)
-  console.log('response.data :>> ', response.data);
+  return response.data
+}
+
+const getSoldItems = async () => {
+  const config = {
+    headers: { Authorization: token }
+  }
+  const response = await axios.get('http://127.0.0.1:8000/api/sold-items/', config)
   return response.data
 }
 
 
 
-export default { setToken, getAll, create, deleteItem, searchByTitle, addToCart, getUserCart, deleteUserCartItem, editItem, handlePayItems, getPurchasedItems }
+export default { setToken, getAll, create, deleteItem, searchByTitle, addToCart, getUserCart, deleteUserCartItem, editItem, handlePayItems, getPurchasedItems, getSoldItems }

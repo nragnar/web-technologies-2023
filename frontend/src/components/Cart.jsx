@@ -12,6 +12,7 @@ const Cart = ({ handlePay, cartItems, handleDeleteFromCart }) => {
     <div>
       <h2>Your Cart:</h2>
       <ul>
+      <div className='item-list'>
         {cartItems === undefined || cartItems.length == 0
         ? 
         <h3>No items in Cart</h3>
@@ -27,6 +28,8 @@ const Cart = ({ handlePay, cartItems, handleDeleteFromCart }) => {
             <button onClick={() => handleDeleteFromCart(item.id)}>Delete from Cart</button>
           </div>
         ))}
+
+      </div>
       </ul>
       <div>
       {!(!cartItems|| !cartItems.length) &&

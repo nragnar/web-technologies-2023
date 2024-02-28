@@ -18,6 +18,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState("")
   const [cartItems, setCartItems] = useState([]);
   const [purchasedItems, setPurchasedItems] = useState([])
+  const [soldItems, setSoldItems] = useState([])
 
   // fetch Cart
   useEffect(() => {
@@ -48,37 +49,65 @@ function App() {
     fetchPurchasedItems()
   }, [user.access])
 
+  // fetch sold items
+  useEffect(() => {
+    const fetchSoldItems = async () => {
 
-     // Fetch items based on the search query
-     useEffect(() => {
-      const fetchData = async () => {
-        try {
-          let fetchedItems = [];
-          if (searchQuery.trim() === '') {
-            fetchedItems = await itemService.getAll();
-          } else {
-            fetchedItems = await itemService.searchByTitle(searchQuery);
+      try {
+        itemService.setToken(user.access)
+        const soldData = await itemService.getSoldItems()
+        setSoldItems(soldData)
+
+      } catch (error){
+        console.log('error :>> ', error);
+      }
+    }
+    fetchSoldItems()
+  }, [user.access])
+
+
+       // Fetch items based on the search query
+       useEffect(() => {
+        const fetchData = async () => {
+          try {
+            let fetchedItems = [];
+            if (searchQuery.trim() === '') {
+              fetchedItems = await itemService.getAll();
+            } else {
+              fetchedItems = await itemService.searchByTitle(searchQuery);
+            }
+            setItems(fetchedItems);
+          } catch (error) {
+            console.log('Error fetching data', error);
           }
-          setItems(fetchedItems);
-        } catch (error) {
-          console.log('Error fetching data', error);
-        }
-      };
-      fetchData();
-    }, [searchQuery])
-  
-  
-      // load local storage
-      useEffect(() => {
-        const loggedUserJSON = window.localStorage.getItem('loggedShopUser')
-        if (loggedUserJSON) {
-          const user = JSON.parse(loggedUserJSON)
-          // we need a setUsername but we dont have that automatically without a login, need to fix the user instance to an object
-          // setUsername(username)
-          setUser(user)
-          itemService.setToken(user.access)
-        }
-      }, [])
+        };
+        fetchData();
+      }, [searchQuery])
+    
+    
+        // load local storage
+        useEffect(() => {
+          const loggedUserJSON = window.localStorage.getItem('loggedShopUser')
+          if (loggedUserJSON) {
+            const user = JSON.parse(loggedUserJSON)
+            // we need a setUsername but we dont have that automatically without a login, need to fix the user instance to an object
+            // setUsername(username)
+            setUser(user)
+            itemService.setToken(user.access)
+          }
+        }, [])
+
+  const handlePay = async () => {
+    try {
+      await itemService.handlePayItems(user.access)
+      const updatedItems = items.filter(item => !cartItems.some(cartItem => cartItem.id === item.id));
+      setItems(updatedItems)
+      setPurchasedItems([...purchasedItems, ...cartItems])
+      console.log("we are in handlePay")
+    } catch (error) {
+      console.log('error from cart while paying items', error)
+    }
+  }
 
 
   const handleDeleteFromCart = async (itemId) => {
@@ -176,19 +205,8 @@ function App() {
       }
     }
 
-    const handlePay = async () => {
-      try {
-        await itemService.handlePayItems(user.access)
-        const updatedItems = items.filter(item => !cartItems.some(cartItem => cartItem.id === item.id));
-        setItems(updatedItems)
-        setPurchasedItems([...purchasedItems, ...cartItems])
-        console.log("we are in handlePay")
-      } catch (error) {
-        console.log('error from cart while paying items', error)
-      }
-    }
 
-  console.log('purchasedItems :>> ', purchasedItems);
+  console.log('items for sale: :>> ', items);
   
   return (
     <>
@@ -220,7 +238,7 @@ function App() {
       placeholder='Search by title'
     />
     <ItemList handleEditItem={handleEditItem} username={username} items={items} onDelete={onDelete} onAddToCart={onAddToCart}/>
-    <Inventory purchasedItems={purchasedItems} />
+    <Inventory purchasedItems={purchasedItems} soldItems={soldItems} />
     </>
   )
 }

@@ -48,6 +48,11 @@ class PurchasedItemSerializer(serializers.ModelSerializer):
 
 
 class SoldItemSerializer(serializers.ModelSerializer):
+    title = serializers.ReadOnlyField(source='item.title')
+    description = serializers.ReadOnlyField(source='item.description')
+    price = serializers.ReadOnlyField(source='item.price')
+    date = serializers.ReadOnlyField(source='item.date')
+    
     class Meta:
         model = SoldItem
-        fields = '__all__'
+        fields = ['id', 'title', 'date', 'description', 'price']

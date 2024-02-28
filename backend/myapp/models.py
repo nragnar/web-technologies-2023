@@ -30,5 +30,4 @@ class PurchasedItem(models.Model):
 
 class SoldItem(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    buyer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    sale_date = models.DateTimeField(auto_now_add=True)
+    seller = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sold_items")

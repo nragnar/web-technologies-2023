@@ -34,9 +34,11 @@ class ItemList(generics.ListCreateAPIView):
     def get_queryset(self):
         # Exclude items that have been purchased
         purchased_item_ids = PurchasedItem.objects.values('item_id')
-        queryset = Item.objects.exclude(id__in=Subquery(purchased_item_ids))
+        sold_item_ids = SoldItem.objects.values('item_id')
+        queryset = Item.objects.exclude(id__in=Subquery(purchased_item_ids)).exclude(id__in=Subquery(sold_item_ids))
+        return queryset
     
-    queryset = Item.objects.all()
+    #queryset = Item.objects.all()
     serializer_class = ItemSerializer
     # filter functionality
     filter_backends = [filters.SearchFilter]
@@ -159,7 +161,12 @@ class PayForItems(APIView):
 
             with transaction.atomic():
                 purchased_items = []
+                sold_items = []
+
                 for item in items:
+
+                    original_owner = item.owner
+
                     # Create a new instance of the Item model for the purchased item
                     purchased_item = Item.objects.create(
                         title=item.title,
@@ -168,24 +175,53 @@ class PayForItems(APIView):
                         owner=user
                     )
 
+                    print(f'THIS IS THE PURCHASED ITEM: {purchased_item}')
+
                     # Create a new PurchasedItem instance for the purchased item
                     purchased_item_record = PurchasedItem.objects.create(
                         item=purchased_item,
                         buyer=user
                     )
 
+                    print(f'THIS IS THE PURCHASED ITEM RECORD: {purchased_item_record}')
+
                     # Add the purchased item to the purchased items list
                     purchased_items.append(purchased_item_record)
+
+
+                    # Create a new instance of SoldItem
+                    sold_item = Item.objects.create(
+                        title=item.title,
+                        description=item.description,
+                        price=item.price,
+                        owner=original_owner  
+                    )
+
+                    print(f'THIS IS THE SOLD ITEM: {sold_item}')
+
+                    sold_item_record = SoldItem.objects.create(
+                        item=sold_item,
+                        seller=original_owner 
+                    )
+
+                    print(f'THIS IS THE SOLD ITEM RECORD: {sold_item_record}')
+
+                    # Add the sold item to the sold items list
+                    sold_items.append(sold_item)
 
                     # Remove the item from the cart
                     item.delete()
                     cart.items.remove(item)
+
+                    print(f'SOLD ITEMS ARE {sold_item}')
                 
                 # Clear the cart
                 cart.items.clear()
 
-            serializer = PurchasedItemSerializer(purchased_items, many=True)
-            return Response(serializer.data)
+            purchased_serializer = PurchasedItemSerializer(purchased_items, many=True)
+            sold_serializer = SoldItemSerializer(sold_items, many=True)
+            print(f'THIS IS THE SOLD_SERIALIZER {sold_serializer.data}')
+            return Response({"purchased_items": purchased_serializer.data, "sold_items": sold_serializer.data}, status=status.HTTP_201_CREATED)
 
         except Cart.DoesNotExist:
             return Response("Cart not found", status=status.HTTP_404_NOT_FOUND)
@@ -198,38 +234,10 @@ class PurchasedItemList(generics.ListAPIView):
         user = self.request.user
         return PurchasedItem.objects.filter(buyer=user)
 
-class SoldItem(APIView):
-    def post(self, request, item_id):
-        try:
-            # Retrieve the item
-            item = get_object_or_404(Item, pk=item_id)
-
-            # Retrieve the original seller of the item
-            original_seller = item.owner
-
-            # Create a new instance of SoldItem
-            sold_item = SoldItem.objects.create(
-                item=item,
-                seller=original_seller
-            )
-
-            # Optionally, you can remove the item from the list of available items
-            # item.delete()
-
-            # Add the sold item to the original seller's sold items list
-            original_seller.sold_items.add(sold_item)
-
-            # Serialize the sold item
-            serializer = SoldItemSerializer(sold_item)
-
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        except Exception as e:
-            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
         
 class SoldItemList(generics.ListAPIView):
     serializer_class = SoldItemSerializer
-    permission_classes = [IsAuthenticated]  # Require authentication to access the sold items list
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user

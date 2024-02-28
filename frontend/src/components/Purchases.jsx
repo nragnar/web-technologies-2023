@@ -1,9 +1,8 @@
+/* eslint-disable */
+
 import React from 'react'
 
 const Purchases = ({ purchasedItems }) => {
-
-  console.log('IN PURCHASES :>> ', purchasedItems);
-
 
   return (
     <div>
