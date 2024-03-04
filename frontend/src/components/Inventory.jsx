@@ -1,11 +1,12 @@
 import React from 'react'
 import Purchases from './Purchases'
 import SoldItems from './SoldItems'
+import PersonalItems from './PersonalItems'
 
-const Inventory = ({ purchasedItems, soldItems }) => {
+const Inventory = ({ purchasedItems, soldItems, personalItems }) => {
   return (
     <div>
-      <h3>Your Items on sale:</h3>
+      <PersonalItems personalItems={personalItems} />
 
       <SoldItems soldItems={soldItems}/>
       <Purchases purchasedItems={purchasedItems} />

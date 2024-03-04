@@ -19,6 +19,7 @@ function App() {
   const [cartItems, setCartItems] = useState([]);
   const [purchasedItems, setPurchasedItems] = useState([])
   const [soldItems, setSoldItems] = useState([])
+  const [personalItems, setPersonalItems] = useState([])
 
   // fetch Cart
   useEffect(() => {
@@ -65,6 +66,21 @@ function App() {
     fetchSoldItems()
   }, [user.access])
 
+    // get personal items for sale
+    useEffect(() => {
+      const getPersonalItems = async () => {
+        try {
+          itemService.setToken(user.access);
+          const personalItems = await itemService.getPersonalItems()
+          setPersonalItems(personalItems)
+          console.log('personalItems :>> ', personalItems);
+        } catch (error) {
+          console.log('There was an error fetching personal items.');
+        }
+      }
+      getPersonalItems();
+    }, [user.access])
+
 
        // Fetch items based on the search query
        useEffect(() => {
@@ -96,6 +112,8 @@ function App() {
             itemService.setToken(user.access)
           }
         }, [])
+
+
 
   const handlePay = async () => {
     try {
@@ -205,8 +223,7 @@ function App() {
       }
     }
 
-
-  console.log('items for sale: :>> ', items);
+    console.log('personalItems :>> ', personalItems);
   
   return (
     <>
@@ -238,7 +255,7 @@ function App() {
       placeholder='Search by title'
     />
     <ItemList handleEditItem={handleEditItem} username={username} items={items} onDelete={onDelete} onAddToCart={onAddToCart}/>
-    <Inventory purchasedItems={purchasedItems} soldItems={soldItems} />
+    <Inventory purchasedItems={purchasedItems} soldItems={soldItems} personalItems={personalItems} />
     </>
   )
 }

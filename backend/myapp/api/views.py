@@ -54,9 +54,25 @@ class ItemDetail(generics.RetrieveUpdateDestroyAPIView):
 from django.contrib.auth.models import User
 
 
+class PersonalItems(generics.ListCreateAPIView):   
+    permission_classes = [IsAuthenticated]
+    serializer_class = ItemSerializer
+    
+    def get_queryset(self):
+        curr_user = self.request.user
+        # exclude items you have purchased and sold
+        purchased_item_ids = PurchasedItem.objects.values('item_id')
+        sold_item_ids = SoldItem.objects.values('item_id')
+        queryset = Item.objects.filter(owner=curr_user).exclude(id__in=Subquery(purchased_item_ids)).exclude(id__in=Subquery(sold_item_ids))
+        return queryset
+
 class UserList(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+
+
+
 
 
 class UserDetail(generics.RetrieveAPIView):
