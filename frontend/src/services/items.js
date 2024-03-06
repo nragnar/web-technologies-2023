@@ -69,8 +69,15 @@ const deleteUserCartItem = async (id) => {
     const config = {
       headers: { Authorization: token }
     }
-    const response = await axios.delete(`http://127.0.0.1:8000/api/remove-from-cart/${id}/`, config)
-    return response.data
+    try {
+      const response = await axios.delete(`http://127.0.0.1:8000/api/remove-from-cart/${id}/`, config)
+      return response.data
+    } catch (error) {
+      if (error.response && error.response.status === 404){
+        return null
+      }
+    }
+
   
 }
 

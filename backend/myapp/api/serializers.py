@@ -11,6 +11,11 @@ class ItemSerializer(ModelSerializer):
     class Meta:
         model = Item
         fields = '__all__'
+    
+    def get_item_notification(self, obj):
+        if obj.item_notification:
+            return obj.item_notification
+        return None
 
 class LoginSerializer(serializers.Serializer):
         username = serializers.CharField()

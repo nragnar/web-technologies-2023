@@ -20,6 +20,7 @@ function App() {
   const [purchasedItems, setPurchasedItems] = useState([])
   const [soldItems, setSoldItems] = useState([])
   const [personalItems, setPersonalItems] = useState([])
+  const [removedItemTitles, setRemovedItemTitles] = useState([])
 
   // fetch Cart
   useEffect(() => {
@@ -34,6 +35,8 @@ function App() {
     };
     fetchCartItems();
   }, [user.access]);
+
+
 
   // fetch purchased Items
   useEffect(() => {
@@ -113,17 +116,49 @@ function App() {
           }
         }, [])
 
-
-
   const handlePay = async () => {
     try {
-      await itemService.handlePayItems(user.access)
-      const updatedItems = items.filter(item => !cartItems.some(cartItem => cartItem.id === item.id));
-      setItems(updatedItems)
-      setPurchasedItems([...purchasedItems, ...cartItems])
-      console.log("we are in handlePay")
+
+      console.log("we are in handlePay right now")
+
+      // handling the removedItems check
+      const cartItemIds = cartItems.map(item => item.id)
+      const response = await itemService.getAll()
+
+      console.log('response :>> ', response);
+      
+      const availableItems = response.map(item => item.id)
+      console.log('availableItems :>> ', availableItems);
+      const removedIds = cartItemIds.filter(id => !availableItems.includes(id))
+
+
+
+      console.log('removedIds :>> ', removedIds > 0);
+
+      const removedItems = cartItems.filter(item => removedIds.includes(item.id))
+      setRemovedItemTitles(removedItems.map(item => item.title))
+
+      if (removedIds.length > 0){
+
+        alert("there has been items removed during your payment process, please manually remove the items that no longer exist.")
+      } else {
+
+        try{
+          await itemService.handlePayItems(user.access)
+          const updatedItems = items.filter(item => !cartItems.some(cartItem => cartItem.id === item.id));
+          setItems(updatedItems)
+          setPurchasedItems([...purchasedItems, ...cartItems])
+        } catch (error) {
+          alert(error.response.data)
+          console.log('error from cart while paying items', error)
+        }
+
+
+
+      }
     } catch (error) {
-      console.log('error from cart while paying items', error)
+      alert(error.response.data)
+      console.log('error in checking removed items', error)
     }
   }
 
@@ -133,19 +168,17 @@ function App() {
       itemService.setToken(user.access);
       await itemService.deleteUserCartItem(itemId);
       // After deletion, fetch the updated cart items
-      const updatedCartData = await itemService.getUserCart();
-      setCartItems(updatedCartData.items);
+      
+      setCartItems(prevCartItems => prevCartItems.filter(item => item.id !== itemId));
     } catch (error) {
       console.log("Error deleting item from cart:", error);
     }
   };
 
-
-
-  const handleSubmitItem = async (blogObject) => {
+  const handleSubmitItem = async (itemObject) => {
     try{
       console.log('user.id :>> ', username.id);
-      const newItem = await itemService.create(blogObject, user.access)
+      const newItem = await itemService.create(itemObject, user.access)
       setItems([...items, newItem])
     }
     catch (exception) {
@@ -222,9 +255,7 @@ function App() {
       alert(error.response.data)
       }
     }
-
-    console.log('personalItems :>> ', personalItems);
-  
+ 
   return (
     <>
 
@@ -242,7 +273,7 @@ function App() {
     <ItemForm handleSubmitItem={handleSubmitItem} />
     <p>Logged in as: {username!=null ? username : " " }</p>
     <button onClick={onLogout}>Log out</button>
-    <Cart handlePay={handlePay} cartItems={cartItems} handleDeleteFromCart={handleDeleteFromCart}/>
+    <Cart handlePay={handlePay} cartItems={cartItems} handleDeleteFromCart={handleDeleteFromCart} removedItemTitles={removedItemTitles}/>
     </div>
     }
 
@@ -263,3 +294,6 @@ function App() {
 export default App
 
 //TODO: make the user different, now it just contains the access and refresh token.
+//TODO: when a price is edited, the item.item_notification should instantly show rather than having to refresh the page
+//TODO: eliminate the refresh page for updates alltogether
+

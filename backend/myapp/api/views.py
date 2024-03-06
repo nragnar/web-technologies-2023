@@ -23,6 +23,12 @@ from rest_framework import filters
 from django.db import transaction
 from django.utils import timezone
 from django.db.models import Subquery
+from rest_framework.exceptions import APIException
+
+# exceptions
+class PriceChangeException(APIException):
+    status_code = 400
+    default_detail = 'The price of some items has changed.'
 
 class ItemList(generics.ListCreateAPIView):
 
@@ -161,9 +167,17 @@ class RemoveFromCart(APIView):
             return Response("User not authenticated", status=status.HTTP_401_UNAUTHORIZED)
         cart = get_object_or_404(Cart, user=user)
         item = get_object_or_404(cart.items, pk=item_id)
+
+        # remove item notification if user removes it from cart
+        if item.item_notification is not None:
+            item.item_notification = None
+            item.save()
+
+
         cart.items.remove(item)
         return Response("Item removed from cart", status=status.HTTP_204_NO_CONTENT)
     
+
 
 class PayForItems(APIView):
     
@@ -175,13 +189,23 @@ class PayForItems(APIView):
             cart = Cart.objects.get(user=user)
             items = cart.items.all()
 
+            initial_item_ids = set(cart.items.values_list('id', flat=True))
+
             with transaction.atomic():
                 purchased_items = []
                 sold_items = []
 
+                price_has_changed = False
+
                 for item in items:
 
                     original_owner = item.owner
+
+                    if item.previous_price != item.price and not price_has_changed:
+                        item.item_notification = "the price changed. It was {} but is now {}".format(item.previous_price, item.price)
+                        item.save()
+                        price_has_changed = True
+                        raise PriceChangeException()
 
                     # Create a new instance of the Item model for the purchased item
                     purchased_item = Item.objects.create(
@@ -191,19 +215,14 @@ class PayForItems(APIView):
                         owner=user
                     )
 
-                    print(f'THIS IS THE PURCHASED ITEM: {purchased_item}')
-
                     # Create a new PurchasedItem instance for the purchased item
                     purchased_item_record = PurchasedItem.objects.create(
                         item=purchased_item,
                         buyer=user
                     )
 
-                    print(f'THIS IS THE PURCHASED ITEM RECORD: {purchased_item_record}')
-
                     # Add the purchased item to the purchased items list
                     purchased_items.append(purchased_item_record)
-
 
                     # Create a new instance of SoldItem
                     sold_item = Item.objects.create(
@@ -213,34 +232,40 @@ class PayForItems(APIView):
                         owner=original_owner  
                     )
 
-                    print(f'THIS IS THE SOLD ITEM: {sold_item}')
-
+                    # important
                     sold_item_record = SoldItem.objects.create(
                         item=sold_item,
                         seller=original_owner 
                     )
 
-                    print(f'THIS IS THE SOLD ITEM RECORD: {sold_item_record}')
-
                     # Add the sold item to the sold items list
                     sold_items.append(sold_item)
+
+                    # chek for removed item
+                    current_item_ids = set(cart.items.values_list('id', flat=True))
+                    removed_item_ids = initial_item_ids - current_item_ids
 
                     # Remove the item from the cart
                     item.delete()
                     cart.items.remove(item)
-
-                    print(f'SOLD ITEMS ARE {sold_item}')
                 
                 # Clear the cart
                 cart.items.clear()
 
             purchased_serializer = PurchasedItemSerializer(purchased_items, many=True)
             sold_serializer = SoldItemSerializer(sold_items, many=True)
-            print(f'THIS IS THE SOLD_SERIALIZER {sold_serializer.data}')
             return Response({"purchased_items": purchased_serializer.data, "sold_items": sold_serializer.data}, status=status.HTTP_201_CREATED)
 
         except Cart.DoesNotExist:
             return Response("Cart not found", status=status.HTTP_404_NOT_FOUND)
+        
+        except PriceChangeException:
+            item.previous_price = item.price
+            item.save()
+            return Response("The price of some items has changed", status=status.HTTP_400_BAD_REQUEST)
+        
+        except Exception as e:
+            return Response("An error occurred during payment processing", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class PurchasedItemList(generics.ListAPIView):
     serializer_class = PurchasedItemSerializer

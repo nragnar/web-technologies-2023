@@ -10,12 +10,17 @@ class Item(models.Model):
     date = models.DateTimeField(auto_now_add=True, blank=True)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, to_field="username", null=False, on_delete=models.CASCADE, default=None)
     previous_price = models.DecimalField(max_digits=8, decimal_places=2, null=True)
+    item_notification = models.CharField(max_length=100, null=True)
 
     def save(self, *args, **kwargs):
+        if not self.pk:
+            self.previous_price = self.price
+
         if self.pk:
             old_item = Item.objects.get(pk=self.pk)
             if old_item.price != self.price:
                 self.previous_price = old_item.price
+                self.item_notification = f"The price changed. It was {self.previous_price} but is now {self.price}"
         super(Item, self).save(*args, **kwargs)
 
 class Cart(models.Model):
