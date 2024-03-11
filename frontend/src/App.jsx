@@ -22,6 +22,19 @@ function App() {
   const [personalItems, setPersonalItems] = useState([])
   const [removedItemTitles, setRemovedItemTitles] = useState([])
 
+
+  //        // load local storage
+//        useEffect(() => {
+//          const loggedUserJSON = window.localStorage.getItem('loggedShopUser')
+//          if (loggedUserJSON) {
+//            const user = JSON.parse(loggedUserJSON)
+//            // we need a setUsername but we dont have that automatically without a login, need to fix the user instance to an object
+//            // setUsername(username)
+//            setUser(user)
+//            itemService.setToken(user.access)
+//          }
+//        }, [])
+
   // fetch Cart
   useEffect(() => {
     const fetchCartItems = async () => {
@@ -104,17 +117,7 @@ function App() {
       }, [searchQuery])
     
     
-        // load local storage
-        useEffect(() => {
-          const loggedUserJSON = window.localStorage.getItem('loggedShopUser')
-          if (loggedUserJSON) {
-            const user = JSON.parse(loggedUserJSON)
-            // we need a setUsername but we dont have that automatically without a login, need to fix the user instance to an object
-            // setUsername(username)
-            setUser(user)
-            itemService.setToken(user.access)
-          }
-        }, [])
+
 
   const handlePay = async () => {
     try {
@@ -123,19 +126,12 @@ function App() {
 
       // handling the removedItems check
       const cartItemIds = cartItems.map(item => item.id)
-      const response = await itemService.getAll()
+      const response = await itemService.getAll()   
 
-      console.log('response :>> ', response);
-      
       const availableItems = response.map(item => item.id)
-      console.log('availableItems :>> ', availableItems);
       const removedIds = cartItemIds.filter(id => !availableItems.includes(id))
-
-
-
-      console.log('removedIds :>> ', removedIds > 0);
-
       const removedItems = cartItems.filter(item => removedIds.includes(item.id))
+      
       setRemovedItemTitles(removedItems.map(item => item.title))
 
       if (removedIds.length > 0){
@@ -148,13 +144,14 @@ function App() {
           const updatedItems = items.filter(item => !cartItems.some(cartItem => cartItem.id === item.id));
           setItems(updatedItems)
           setPurchasedItems([...purchasedItems, ...cartItems])
+          const updatedCart = await itemService.getUserCart()
+          setCartItems(updatedCart.items)
         } catch (error) {
           alert(error.response.data)
+          const updatedCart = await itemService.getUserCart()
+          setCartItems(updatedCart.items)
           console.log('error from cart while paying items', error)
         }
-
-
-
       }
     } catch (error) {
       alert(error.response.data)
@@ -180,6 +177,7 @@ function App() {
       console.log('user.id :>> ', username.id);
       const newItem = await itemService.create(itemObject, user.access)
       setItems([...items, newItem])
+      setPersonalItems([...personalItems, newItem])
     }
     catch (exception) {
       console.log(exception)
@@ -286,7 +284,12 @@ function App() {
       placeholder='Search by title'
     />
     <ItemList handleEditItem={handleEditItem} username={username} items={items} onDelete={onDelete} onAddToCart={onAddToCart}/>
-    <Inventory purchasedItems={purchasedItems} soldItems={soldItems} personalItems={personalItems} />
+    {user && <>
+          
+          <Inventory purchasedItems={purchasedItems} soldItems={soldItems} personalItems={personalItems} />
+    </>
+    }
+
     </>
   )
 }

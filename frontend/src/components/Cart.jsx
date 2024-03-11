@@ -23,15 +23,7 @@ const Cart = ({ handlePay, cartItems, handleDeleteFromCart, removedItemTitles })
         
       <ul>
       <div className='item-list'>
-
-        
-
-        
-
-        
-        
-        
-
+    
         {cartItems === undefined || cartItems.length == 0
         ? 
         <h3>No items in Cart</h3>
