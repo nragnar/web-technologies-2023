@@ -9,7 +9,7 @@ const SoldItems = ({ soldItems }) => {
     <h3>Sold items: </h3>
 
     <ul>
-      {soldItems && soldItems.map((i) => (
+      {soldItems >=0 ? <p>You have not sold any items yet</p> : soldItems.map((i) => (
       
         <div className='item-container' key={i.id}>
           <h2>{i.title}</h2>

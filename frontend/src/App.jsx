@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom'
+
 import itemService from './services/items'
 import loginService from './services/login'
 import registerService from './services/register'
@@ -12,6 +14,8 @@ import Inventory from './components/Inventory'
 
 function App() {
 
+  const navigate = useNavigate();
+
   const [items, setItems] = useState([])
   const [user, setUser] = useState('')
   const [username, setUsername] = useState('')
@@ -23,17 +27,18 @@ function App() {
   const [removedItemTitles, setRemovedItemTitles] = useState([])
 
 
-  //        // load local storage
-//        useEffect(() => {
-//          const loggedUserJSON = window.localStorage.getItem('loggedShopUser')
-//          if (loggedUserJSON) {
-//            const user = JSON.parse(loggedUserJSON)
-//            // we need a setUsername but we dont have that automatically without a login, need to fix the user instance to an object
-//            // setUsername(username)
-//            setUser(user)
-//            itemService.setToken(user.access)
-//          }
-//        }, [])
+
+ //         // load local storage
+ //       useEffect(() => {
+ //         const loggedUserJSON = window.localStorage.getItem('loggedShopUser')
+ //         if (loggedUserJSON) {
+ //           const user = JSON.parse(loggedUserJSON)
+ //           // we need a setUsername but we dont have that automatically without a login, need to fix the user instance to an object
+ //           // setUsername(username)
+ //           setUser(user)
+ //           itemService.setToken(user.access)
+ //         }
+ //       }, [])
 
   // fetch Cart
   useEffect(() => {
@@ -208,7 +213,8 @@ function App() {
       setUser(user)
       itemService.setToken(user.access)
       window.localStorage.setItem('loggedShopUser', JSON.stringify(user))
-
+      navigate("/")
+      
     } catch (exception) {
       console.log(exception);
   }
@@ -227,7 +233,7 @@ function App() {
       await registerService.register({
         username, password
       })
-
+      navigate("/")
     } catch (expection) {
       console.log(expection)
     }
@@ -256,41 +262,47 @@ function App() {
  
   return (
     <>
+      
+        <Routes>
+          <Route path="/login" element={<LoginForm handleLogin={onLogin} />} />
+          <Route path="/register" element={<RegisterForm handleRegister={onRegister} />} />
+          <Route path="/account" element={null} />
+          <Route path="/myitems" element={<Inventory user={user.access} purchasedItems={purchasedItems} soldItems={soldItems} personalItems={personalItems} />} />
 
-    <h1>Web Shop - nragnell</h1>
-    <div className='register-login-forms'>
-    {
-    !user ? (
-    <div> 
-    <LoginForm handleLogin={onLogin} />
-    
-    </div>
-    )
-    :
-    <div>
-    <ItemForm handleSubmitItem={handleSubmitItem} />
-    <p>Logged in as: {username!=null ? username : " " }</p>
-    <button onClick={onLogout}>Log out</button>
-    <Cart handlePay={handlePay} cartItems={cartItems} handleDeleteFromCart={handleDeleteFromCart} removedItemTitles={removedItemTitles}/>
-    </div>
-    }
+          <Route path='/' element= {
+            <div>
+              <Link className='website-title' to="/">WebShop - nragnell</Link>
+              <br />
+              {!user ? <>
+              <Link to="/login">Login</Link>
+              <br />
+              <Link to="/register">Register</Link>
+              </>
+              :
+              <>
+              <p>Logged in as {username}</p>
+              <button onClick={onLogout}>Log out</button>
+              <Link to="myitems">My Items</Link>
+              <ItemForm handleSubmitItem={handleSubmitItem} />
+              <Cart handlePay={handlePay} cartItems={cartItems} handleDeleteFromCart={handleDeleteFromCart} removedItemTitles={removedItemTitles} />
+              
+              </>
+              }
+               
+              <br/>
+              <input
+                type='text'
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder='Search by title'
+              />
+              <ItemList handleEditItem={handleEditItem} username={username} items={items} onDelete={onDelete} onAddToCart={onAddToCart} />
 
-    <RegisterForm handleRegister={onRegister} />
-    </div>
-    <input
-      type='text'
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      placeholder='Search by title'
-    />
-    <ItemList handleEditItem={handleEditItem} username={username} items={items} onDelete={onDelete} onAddToCart={onAddToCart}/>
-    {user && <>
-          
-          <Inventory purchasedItems={purchasedItems} soldItems={soldItems} personalItems={personalItems} />
-    </>
-    }
-
-    </>
+            </div>
+          }
+          /> {/* Route "/" end */}
+         </Routes>
+  </>
   )
 }
 

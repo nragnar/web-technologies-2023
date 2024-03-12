@@ -1,6 +1,7 @@
 /* eslint-disable */
 
 import React, { useState } from 'react'
+import {Link} from 'react-router-dom'
 
 const LoginForm = ({ handleLogin }) => {
 
@@ -17,10 +18,11 @@ const LoginForm = ({ handleLogin }) => {
 
   return (
     <div>
+      <Link className='website-title' to="/">WebShop - nragnell</Link>
       <h2>Log in to the WebShop</h2>
 
       <form onSubmit={handleSubmit}>
-
+      
         username:
         <input
         value={username}

@@ -25,6 +25,7 @@ const ItemForm = ({ handleSubmitItem }) => {
 
   return (
     <div>
+      <h3>Add a new item to the shop</h3>
       <form>
         <div>
           Title:
@@ -38,7 +39,7 @@ const ItemForm = ({ handleSubmitItem }) => {
           Price:
           <input type='text' value={newPrice} onChange={({target}) => setNewPrice(target.value)} />
         </div>
-        <button type='submit' onClick={addItem}>Submit</button>
+        <button type='submit' onClick={addItem}>Add item to shop</button>
 
     </form>
     </div>

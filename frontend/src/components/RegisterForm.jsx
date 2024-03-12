@@ -1,6 +1,7 @@
 /* eslint-disable */
 
 import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 const RegisterForm = ({ handleRegister }) => {
 
@@ -16,7 +17,9 @@ const RegisterForm = ({ handleRegister }) => {
 
 
   return (
+    
     <div>
+      <Link className='website-title' to="/">WebShop - nragnell</Link>
       <h2>Register new User to the webshop</h2>
 
       <form onSubmit={handleSubmit}>

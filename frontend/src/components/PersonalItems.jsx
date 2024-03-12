@@ -6,7 +6,7 @@ const PersonalItems = ({ personalItems }) => {
       <h3>Your items for sale: </h3>
 
 <ul>
-  {personalItems && personalItems.map((i) => (
+  {personalItems >= 0 ? <p>You currently have no items for sale</p> : personalItems.map((i) => (
   
     <div className='item-container' key={i.id}>
       <h2>{i.title}</h2>

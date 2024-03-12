@@ -10,7 +10,7 @@ const Purchases = ({ purchasedItems }) => {
       <h3>Purchased items: </h3>
 
       <ul>
-        {purchasedItems && purchasedItems.map((i) => (
+        {purchasedItems>=0 ? <p>You have no purchased items</p> : purchasedItems.map((i) => (
         
           <div className='item-container' key={i.id}>
             <h2>{i.title}</h2>

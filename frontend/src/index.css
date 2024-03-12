@@ -78,3 +78,9 @@
   background-color: #298e46;
   box-shadow: rgba(20, 70, 32, .2) 0 1px 0 inset;
 }
+
+
+.website-title{
+  text-decoration: none;
+  font-size: 30px;
+}
