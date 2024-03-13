@@ -26,6 +26,10 @@ class RegisterSerializer(serializers.Serializer):
         username = serializers.CharField()
         password = serializers.CharField()
 
+class ChangePasswordSerializer(serializers.Serializer):
+     old_password = serializers.CharField()
+     new_password = serializers.CharField()
+
 class CartSerializer(serializers.ModelSerializer):
     items = ItemSerializer(many=True, read_only=True)
 

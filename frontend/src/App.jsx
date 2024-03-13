@@ -7,6 +7,8 @@ import registerService from './services/register'
 import ItemForm from './components/ItemForm'
 import LoginForm from './components/LoginForm'
 import RegisterForm from './components/RegisterForm'
+import EditForm from './components/EditForm'
+import editService from './services/editAccount'
 import ItemList from './components/ItemList'
 import Cart from './components/Cart'
 import Inventory from './components/Inventory'
@@ -220,6 +222,20 @@ function App() {
   }
   }
 
+  const onHandleEditPassword = async (oldPassword, newPassword) => {
+    try {
+      editService.setToken(user.access)
+      console.log("we are now before the editservice")
+      await editService.editPassword({ old_password: oldPassword, new_password: newPassword })
+      console.log("we are after editservice")
+      navigate("/")
+      alert('password changed successfully')
+    } catch (error) {
+      console.log('error :>> ', error.response.data);
+      alert('failed.')
+    }
+  }
+
   const onLogout = () => {
     console.log('handle logout')
     window.localStorage.removeItem('loggedShopUser')
@@ -259,6 +275,8 @@ function App() {
       alert(error.response.data)
       }
     }
+
+
  
   return (
     <>
@@ -266,7 +284,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginForm handleLogin={onLogin} />} />
           <Route path="/register" element={<RegisterForm handleRegister={onRegister} />} />
-          <Route path="/account" element={null} />
+          <Route path="/account" element={<EditForm handleEditPassword={onHandleEditPassword}/>} />
           <Route path="/myitems" element={<Inventory user={user.access} purchasedItems={purchasedItems} soldItems={soldItems} personalItems={personalItems} />} />
 
           <Route path='/' element= {
@@ -282,7 +300,11 @@ function App() {
               <>
               <p>Logged in as {username}</p>
               <button onClick={onLogout}>Log out</button>
-              <Link to="myitems">My Items</Link>
+              <br />
+              <Link to="/account">Edit password</Link>
+              <br />
+              <Link to="/myitems">My Items</Link>
+              <br />
               <ItemForm handleSubmitItem={handleSubmitItem} />
               <Cart handlePay={handlePay} cartItems={cartItems} handleDeleteFromCart={handleDeleteFromCart} removedItemTitles={removedItemTitles} />
               
@@ -296,6 +318,7 @@ function App() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder='Search by title'
               />
+              <h2>Items for Sale</h2>
               <ItemList handleEditItem={handleEditItem} username={username} items={items} onDelete={onDelete} onAddToCart={onAddToCart} />
 
             </div>

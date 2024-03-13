@@ -27,6 +27,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/login/', views.LoginUser.as_view()),
     path('api/register/', views.RegisterUser.as_view()),
+    path('api/edit-account/', views.ChangePassword.as_view()),
     path('api/items/', views.ItemList.as_view()),
     path('api/items/<int:pk>/', views.ItemDetail.as_view()),
     path('api/users/', views.UserList.as_view()),

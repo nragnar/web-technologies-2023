@@ -117,10 +117,8 @@ const getPersonalItems = async () => {
     headers: { Authorization: token }
   }
   const response = await axios.get('http://127.0.0.1:8000/api/personal-items/', config)
-  console.log('response.data12312312312 :>> ', response.data);
   return response.data
 }
-
 
 
 export default { setToken, getAll, create, deleteItem, searchByTitle, addToCart, getUserCart, deleteUserCartItem, editItem, handlePayItems, getPurchasedItems, getSoldItems, getPersonalItems }
