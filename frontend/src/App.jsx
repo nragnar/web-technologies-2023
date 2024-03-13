@@ -334,4 +334,3 @@ export default App
 //TODO: make the user different, now it just contains the access and refresh token.
 //TODO: when a price is edited, the item.item_notification should instantly show rather than having to refresh the page
 //TODO: eliminate the refresh page for updates alltogether
-
