@@ -25,6 +25,9 @@ from django.utils import timezone
 from django.db.models import Subquery
 from rest_framework.exceptions import APIException
 
+import random
+from .itemlist import ITEM_LIST
+
 # exceptions
 class PriceChangeException(APIException):
     status_code = 400
@@ -318,3 +321,29 @@ class ChangePassword(generics.UpdateAPIView):
         else:
             print(f'THIS IS THE ERROR: {serializer.errors}')
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+
+@api_view(['GET'])
+def populate(request):
+    # clearing the DB
+    User.objects.all().delete()
+    Item.objects.all().delete()
+
+    #populating with no_u users and no_i items each
+    no_u = 6
+    no_i = 10
+    
+    try:
+        for n in range(no_u):
+            user = User.objects.create_user("testuser{}".format(n), "testuser{}@shop.aa".format(n), "pass{}".format(n))
+            user.save()
+
+            if n < 3:
+                for i in range(no_i):
+                    item_data = random.choice(ITEM_LIST)
+                    item = Item(title=item_data['title'], description=item_data['description'], price=item_data['price'], owner=user)
+                    item.save()
+        message = "populated with {} users and {} items each".format(no_u, no_i)
+    except Exception as e:
+        message = "Populate failed:  " + str(e)
+    return Response({"message": message})

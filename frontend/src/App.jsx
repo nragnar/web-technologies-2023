@@ -12,6 +12,9 @@ import editService from './services/editAccount'
 import ItemList from './components/ItemList'
 import Cart from './components/Cart'
 import Inventory from './components/Inventory'
+import populateService from './services/populate'
+import Notification from './components/Notification'
+import { Fragment } from 'react'
 
 
 function App() {
@@ -27,6 +30,7 @@ function App() {
   const [soldItems, setSoldItems] = useState([])
   const [personalItems, setPersonalItems] = useState([])
   const [removedItemTitles, setRemovedItemTitles] = useState([])
+  const [notification, setNotification] = useState(null)
 
 
 
@@ -46,15 +50,17 @@ function App() {
   useEffect(() => {
     const fetchCartItems = async () => {
       try {
-        itemService.setToken(user.access);
-        const cartData = await itemService.getUserCart();
-        setCartItems(cartData.items);
+        if (user){
+          itemService.setToken(user.access);
+          const cartData = await itemService.getUserCart();
+          setCartItems(cartData.items);
+        }
       } catch (error) {
         console.log("Error fetching cart items:", error);
       }
     };
     fetchCartItems();
-  }, [user.access]);
+  }, [user, user.access]);
 
 
 
@@ -62,47 +68,49 @@ function App() {
   useEffect(() => {
     const fetchPurchasedItems = async () => {
       try {
-        itemService.setToken(user.access);
-        const purchaseData = await itemService.getPurchasedItems()
-        console.log('purchaseData', purchaseData);
-        setPurchasedItems(purchaseData)
+        if(user){
+          itemService.setToken(user.access);
+          const purchaseData = await itemService.getPurchasedItems()
+          setPurchasedItems(purchaseData)
+        }
       } catch (error) {
         console.log('error fetching Purchase Items', error);
       }
     }
     fetchPurchasedItems()
-  }, [user.access])
+  }, [user, user.access])
 
   // fetch sold items
   useEffect(() => {
     const fetchSoldItems = async () => {
-
       try {
-        itemService.setToken(user.access)
-        const soldData = await itemService.getSoldItems()
-        setSoldItems(soldData)
-
+        if(user){
+          itemService.setToken(user.access)
+          const soldData = await itemService.getSoldItems()
+          setSoldItems(soldData)
+        }
       } catch (error){
         console.log('error :>> ', error);
       }
     }
     fetchSoldItems()
-  }, [user.access])
+  }, [user, user.access])
 
     // get personal items for sale
     useEffect(() => {
       const getPersonalItems = async () => {
         try {
-          itemService.setToken(user.access);
-          const personalItems = await itemService.getPersonalItems()
-          setPersonalItems(personalItems)
-          console.log('personalItems :>> ', personalItems);
+          if(user){
+            itemService.setToken(user.access);
+            const personalItems = await itemService.getPersonalItems()
+            setPersonalItems(personalItems)
+          }
         } catch (error) {
           console.log('There was an error fetching personal items.');
         }
       }
       getPersonalItems();
-    }, [user.access])
+    }, [user, user.access])
 
 
        // Fetch items based on the search query
@@ -143,7 +151,7 @@ function App() {
 
       if (removedIds.length > 0){
 
-        alert("there has been items removed during your payment process, please manually remove the items that no longer exist.")
+        notify("there has been items removed during your payment process, please manually remove the items that no longer exist.")
       } else {
 
         try{
@@ -154,14 +162,14 @@ function App() {
           const updatedCart = await itemService.getUserCart()
           setCartItems(updatedCart.items)
         } catch (error) {
-          alert(error.response.data)
+          notify(error.response.data)
           const updatedCart = await itemService.getUserCart()
           setCartItems(updatedCart.items)
           console.log('error from cart while paying items', error)
         }
       }
     } catch (error) {
-      alert(error.response.data)
+      notify(error.response.data)
       console.log('error in checking removed items', error)
     }
   }
@@ -192,7 +200,6 @@ function App() {
   }
 
   const handleEditItem = async (id, editObject) => {
-    console.log('editObject in app.jsx :>> ', editObject);
     try {
       const editedItem = await itemService.editItem(id, editObject)
 
@@ -206,7 +213,6 @@ function App() {
 
 
   const onLogin = async (username, password) => {
-    console.log('handle login')
     try {
       const user = await loginService.login({
         username, password
@@ -217,34 +223,32 @@ function App() {
       window.localStorage.setItem('loggedShopUser', JSON.stringify(user))
       navigate("/")
       
-    } catch (exception) {
-      console.log(exception);
+    } catch (error) {
+      notify(error.response.data, 'error')
+      console.log(error);
   }
   }
 
   const onHandleEditPassword = async (oldPassword, newPassword) => {
     try {
       editService.setToken(user.access)
-      console.log("we are now before the editservice")
+
       await editService.editPassword({ old_password: oldPassword, new_password: newPassword })
-      console.log("we are after editservice")
+
       navigate("/")
-      alert('password changed successfully')
+      notify('password changed successfully')
     } catch (error) {
-      console.log('error :>> ', error.response.data);
-      alert('failed.')
+      notify('failed.')
     }
   }
 
   const onLogout = () => {
-    console.log('handle logout')
     window.localStorage.removeItem('loggedShopUser')
     setUser('')
     setUsername('')
   }
 
   const onRegister = async (username, password) => {
-    console.log('handle Register')
     try {
       await registerService.register({
         username, password
@@ -257,8 +261,6 @@ function App() {
 
 
   const onDelete = async (id) => {
-    console.log('handle delete item')
-
     await itemService.deleteItem(id)
     const updatedItems = await itemService.getAll()
     setItems(updatedItems)
@@ -270,19 +272,42 @@ function App() {
       const response = await itemService.addToCart(id)
       const updatedCartItems = await itemService.getUserCart()
       setCartItems(updatedCartItems.items)
-      alert(response)
+      notify(response)
     } catch (error) {
-      alert(error.response.data)
+      notify(error.response.data)
       }
     }
 
+    const populateDB = async () => {
+      try {
+        const response = await populateService.populate()
+        const fetchedItems = await itemService.getAll();
+        setItems(fetchedItems)
+        notify(response.message)
 
- 
+
+
+      } catch (error) {
+        console.log('error :>> ', error);
+      }
+    }
+
+    const notify = (message, type = 'success') => {
+      setNotification({ message, type })
+      setTimeout(() => {
+        setNotification(null)
+      }, 5000)
+    }
+
+
   return (
     <>
       
         <Routes>
-          <Route path="/login" element={<LoginForm handleLogin={onLogin} />} />
+          <Route path='/login' element={<div>
+            <LoginForm handleLogin={onLogin} />
+            </div>
+          } />
           <Route path="/register" element={<RegisterForm handleRegister={onRegister} />} />
           <Route path="/account" element={<EditForm handleEditPassword={onHandleEditPassword}/>} />
           <Route path="/myitems" element={<Inventory user={user.access} purchasedItems={purchasedItems} soldItems={soldItems} personalItems={personalItems} />} />
@@ -290,6 +315,9 @@ function App() {
           <Route path='/' element= {
             <div>
               <Link className='website-title' to="/">WebShop - nragnell</Link>
+              <Notification notification={notification} />
+              <br />
+              <button onClick={populateDB}>Populate db</button>
               <br />
               {!user ? <>
               <Link to="/login">Login</Link>

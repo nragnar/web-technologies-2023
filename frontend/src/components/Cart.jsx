@@ -4,8 +4,6 @@ import itemService from '../services/items';
 
 const Cart = ({ handlePay, cartItems, handleDeleteFromCart, removedItemTitles }) => {
 
-  console.log('removedItemTitles :>> ', removedItemTitles);
-
   return (
     <div>
       <h2>Your Cart:</h2>

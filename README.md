@@ -1,3 +1,19 @@
+i.
+Nicolas Ragnell
+nicolas.ragnell@abo.fi
+
+ii.
+All requirements have been implemented
+iii.
+1. Start the virtual environment
+2. Go to the folder web_technologies/backend and run "python manage.py runserver"
+3. Open another terminal and go to the folder web_technologies/frontend and run "npm run dev"
+4. Open the link provided by the frontend [vite]. Should be http://localhost:5173
+
+
+
+
+
 Here are the project specifications for the course project:
 
 

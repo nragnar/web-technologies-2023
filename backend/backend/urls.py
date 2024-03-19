@@ -31,6 +31,7 @@ urlpatterns = [
     path('api/items/', views.ItemList.as_view()),
     path('api/items/<int:pk>/', views.ItemDetail.as_view()),
     path('api/users/', views.UserList.as_view()),
+    path('api/populate/', views.populate),
     path('api/personal-items/', views.PersonalItems.as_view(), name='personal-items'),
     path('api/users/<int:pk>/', views.UserDetail.as_view()),
     path('api/users/cart/', views.CartDetail.as_view(), name='user-cart-detail'),
